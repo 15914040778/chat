@@ -4,17 +4,19 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-class WebsocketObeject extends Controller
+class ChatMessageWebsocket extends Controller
 {
   public $server;
   public function __construct() {
-      $this->server = new \swoole_websocket_server("0.0.0.0", 9501);
+      $this->server = new \swoole_websocket_server("0.0.0.0/chatMessage", 9501);
       $this->server->on('open', function (\swoole_websocket_server $server, $request) {
           echo "server: handshake success with fd{$request->fd}\n";
       });
       $this->server->on('message', function (\swoole_websocket_server $server, $frame) {
           // echo "receive from {$frame->fd}:{$frame->data},opcode:{$frame->opcode},fin:{$frame->finish}\n";
           // $server->push($frame->fd, "this is server");
+          $message = json_decode($frame->data);
+          print_r($message);
           foreach ($this->server->connections as $fd) {
               $this->server->push($fd, $frame->data);
           }
@@ -31,4 +33,6 @@ class WebsocketObeject extends Controller
       });
       $this->server->start();
   }
+  // public function get
+
 }

@@ -1,5 +1,5 @@
 
-var socket = new WebSocket('ws://192.168.2.137:9501');
+var socket = new WebSocket('ws://192.168.2.137:9501/roomList');
 var ChatRoomList = React.createClass({
   getInitialState: function() {
     return {

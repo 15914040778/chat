@@ -16,6 +16,7 @@ use App\Http\Resources\Login;
 use App\Http\Controllers\Client;
 use App\Http\Resources\UploadImages;
 use App\Http\Controllers\RedisObject;
+use App\Http\Controllers\Rooms;
 // use Illuminate\Http\Request;
 
 Route::get('/', function () {
@@ -113,7 +114,11 @@ Route::get('test' , function () {
   // // return $Users_login_state
   // echo $Users_login_state;
   // return Users@verification_login_state();
-})->middleware('login');
+  //
+  $Rooms = new Rooms();
+  $allRoomsData = $Rooms->getUnreatMessageNumber(3 , 1);
+  print_r($allRoomsData);
+});
 
 /**
  * upload image
@@ -121,11 +126,10 @@ Route::get('test' , function () {
  * @return Object     Image uploaded data(after uploading image the images data)
 */
 Route::get('upload/images' , function ( ) {
-  if(!empty($_POST['imageObect'])){
-    return new UploadImages($_POST['imageObect']);
-  }else{
+  if(empty($_POST['imageObject'])){
     return false;
   }
+  return new UploadImages($_POST['imageObejct']);
 });
 
 

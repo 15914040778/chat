@@ -23,6 +23,7 @@ class CreateRoomUsersTable extends Migration
             $table->dateTime('date');
             //user grade
             $table->integer('user_grade');
+            
             $table->timestamps();
         });
     }

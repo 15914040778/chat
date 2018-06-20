@@ -3,16 +3,15 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Http\Controllers\WebsocketObeject;
 
-class chatServer extends Command
+class RoomListServer extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'chat:server';
+    protected $signature = 'chat:chatRoomList';
 
     /**
      * The console command description.
@@ -38,7 +37,7 @@ class chatServer extends Command
      */
     public function handle()
     {
-      //start swoole server
-      new WebsocketObeject();
+        //
+        new RoomListServerWebsocket();
     }
 }
