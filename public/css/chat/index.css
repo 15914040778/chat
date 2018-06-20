@@ -1,0 +1,8 @@
+/*PC*/
+@media screen and (min-width:960px){
+  body{
+    width:400px;
+    margin:0 auto;
+    background: #00ff56;
+  }
+}
