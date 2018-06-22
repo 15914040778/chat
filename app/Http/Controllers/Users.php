@@ -12,6 +12,7 @@ class Users extends Controller
     /**
      * get user data
      * @var  $user_id   User id
+     * @version 1.0
      * @return array
     */
     public function get( $user_id )
@@ -29,6 +30,7 @@ class Users extends Controller
      *  @var      $user_name       User name
      *  @var      $user_password   User password
      *  @var      $user_ip         User ip
+     *  @version 1.0
      *  @return   int|bool
     */
     public function insert( $user_name , $user_password , $user_ip )
@@ -53,6 +55,7 @@ class Users extends Controller
      * update user password data
      * @var     $user_id        User id
      * @var     $user_password  User PassWord
+     * @version 1.0
      * @return  int|bool
     */
     public function update_password( $user_id , $user_password )
@@ -74,6 +77,7 @@ class Users extends Controller
      * Verification User name and User Password
      * @var     $userName   User name
      * @var     $password   User Password
+     * @version 1.0
      * @return  bool|int
     */
     public function login( $userName , $password )
@@ -93,6 +97,7 @@ class Users extends Controller
     /**
      * Verification whether login
      * @var   $request    \Illuminate\Http\Request
+     * @version 1.0
     */
     public function whether_login( )
     {
@@ -120,4 +125,5 @@ class Users extends Controller
       }
 
     }
+    
 }

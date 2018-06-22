@@ -86,38 +86,10 @@ Route::get('chat' , function (){
 
 
 Route::get('test' , function () {
-  // class login_info{
-    // public $userName = '15914040778';
-    // public $password = '8911001';
-  // };
-  // $login_info = new login_info();
-  // return new Login($login_info);
-  // $request = new Request();
-  // echo $request->getClientIp();
-  // $login_token = $_COOKIE['login_token'];
-  // $Client = new Client();
-  // $Users = new Users();
-  // $Users_info = $Users->whether_login();
-  // print_r($Users_info);
-  // session_start();
-  // $Users_info = $_SESSION['login_user_info'];
-  // print_r($Users_info);
-  // return $Users_info;
-  // $Users = new Users();
-  // $user_info = $Users->login(1449489029 , 123456);
-  // print_r($user_info);
-  // return new UserResource($Users_info);
-  // print_r($login_token);
-  // $
-  // $Users = new Users();
-  // $Users_login_state = $Users->verification_login_state();
-  // // return $Users_login_state
-  // echo $Users_login_state;
-  // return Users@verification_login_state();
-  //
-  $Rooms = new Rooms();
-  $allRoomsData = $Rooms->getUnreatMessageNumber(3 , 1);
+  $Rooms = Rooms::connect();
+  $allRoomsData = $Rooms->getRoomUserMember(1);
   print_r($allRoomsData);
+  // print_r($allRoomsData[0]->user_id);
 });
 
 /**
@@ -134,8 +106,23 @@ Route::get('upload/images' , function ( ) {
 
 
 Route::get('testChat' , function () {
-  return view('testChat');
-});
+  // session_start();
+  if(!empty($_SESSION['login_user_info'])){
+    $userInfo = $_SESSION['login_user_info'];
+  }else{
+    $Client = new Client();
+    $ip = $Client->ip();
+    $newIp = str_replace('.' , '' , $ip);
+    class userInfo{
+      public $name = '';
+      public $id = '';
+    }
+    $userInfo = new userInfo();
+    $userInfo->name = $ip;
+    $userInfo->id = $newIp;
+  }
+  return view('testChat' , ['userInfo'=>$userInfo]);
+})->middleware('login');
 
 Route::get('testRedis' , function () {
   $redis = RedisObject::getRedisConn();

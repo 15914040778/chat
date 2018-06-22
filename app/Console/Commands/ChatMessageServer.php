@@ -3,9 +3,9 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Http\Controllers\WebsocketObeject;
+use App\Http\Controllers\ChatMessageWebsocket;
 
-class chatServer extends Command
+class chatMessageServer extends Command
 {
     /**
      * The name and signature of the console command.

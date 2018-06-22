@@ -71,11 +71,9 @@
             <!-- end Room list -->
           </div>
         </div>
-        <div class="bd-example-container-body userMessages">
+        <div class="bd-example-container-body userMessages" id='chatRoomContents'>
           <!-- Chat contens -->
-          <div class="float-left">Float left on all viewport sizes</div><br>
-          <div class="float-right">Float right on all viewport sizes</div><br>
-          <div class="float-none">Don't float on all viewport sizes</div>
+          
           <!-- end Chat contens -->
         </div>
       </div>
@@ -87,6 +85,10 @@
     <script src="https://cdn.bootcss.com/react/15.4.2/react.min.js"></script>
   	<script src="https://cdn.bootcss.com/react/15.4.2/react-dom.min.js"></script>
   	<script src="https://cdn.bootcss.com/babel-standalone/6.22.1/babel.min.js"></script>
+    <script>
+      var userId = {{$userInfo->id}};
+      var userName = '{{$userInfo->name}}';
+    </script>
     <script src='/js/testChat/index.js' type='text/babel'></script>
   </body>
 </html>

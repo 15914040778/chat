@@ -7,17 +7,30 @@ use Illuminate\Support\Facades\DB;
 
 class Rooms extends Controller
 {
+    private static $_Rooms;
+    protected function __construct(){
+
+    }
+    /**
+     * single example-ify
+     * @version 1.0
+     */
+    public static function connect(){
+      if(empty(self::$_Rooms)){
+        self::$_Rooms = new Rooms();
+      }
+      return self::$_Rooms;
+    }
     /**
      * get all room data
      * @version 1.0
-     * @return array
+     * @return object
      */
     public function getAllRoomData(){
       $roomsData = DB::table('user_rooms')
                     ->join('room_users' , 'user_rooms.id' , '=' , 'room_users.room_id')
                     ->select('room_users.*' , 'user_rooms.name' , 'user_rooms.description')
                     ->get();
-
       return $roomsData;
     }
     /**
@@ -52,23 +65,41 @@ class Rooms extends Controller
      * @var int $room_id  Room ID
      * @return int
      */
-    public function getUnreatMessageNumber( $user_id , $room_id ){
+    public function getUnreadMessageNumber( $user_id , $room_id ){
       if(empty($user_id) || empty($room_id)){
         return false;
       }
-      DB::connection()->enableQueryLog();
+      //get the time of new read in the designated user and the designated room
       $readTime = DB::table('room_users')
-                  ->join('chats' , 'chats.room_id' , '=' , 'room_users.room_id')
-                  ->where('chats.send_time' , '>' , 'room_users.user_read_time')
-                  ->where('room_users.user_id', '=' , $user_id)
-                  ->where('room_users.room_id' , '=' , $room_id)
-                  ->count();
-      $sql = DB::getQueryLog();
-      return $sql;
+                  ->where('user_id', '=' , $user_id)
+                  ->where('room_id' , '=' , $room_id)
+                  ->value('user_read_time');
+      // DB::connection()->enableQueryLog();
+      //get unread message the number
+      $unreadMessageNumber = DB::table('chats')
+                              ->where('room_id' , $room_id)
+                              ->where('send_time' , '>' , $readTime)
+                              ->count();
+      // $sql = DB::getQueryLog();
+      return $unreadMessageNumber;
     }
     /**
-     * delete designated room the user data
+     * delete designated room and designated user the data
+     * @version 1.0
+     * @var int $room_id Room ID
+     * @var int $user_id User ID
+     * @return bool|int
      */
+    public function deleteRoomUser( $room_id , $user_id ){
+      if(empty($room_id) || empty($user_id)){
+        return false;
+      }
+      $deleteResult = DB::table('room_users')
+                      ->where('room_id' , $roomt_id)
+                      ->where('user_id' , $user_id)
+                      ->delete();
+      return $deleteResult;
+    }
     /**
      * update user read current room message time
      * @version 1.0
@@ -92,6 +123,21 @@ class Rooms extends Controller
                       ]);
       //return update result
       return $updateResult;
+    }
+    /**
+     * get designated room the user member
+     * @version 1.0
+     * @var int $room_id Room ID
+     * @return mixed
+     */
+    public function getRoomUserMember( $room_id ){
+      if(empty($room_id)){
+        return [];
+      }
+      $userMember = DB::table('room_users')
+                    ->where('room_id' , $room_id)
+                    ->pluck('user_id');
+      return $userMember;
     }
 
 }
