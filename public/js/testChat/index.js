@@ -1,5 +1,4 @@
 var roomListSocket = new WebSocket('ws://192.168.2.137:9501/roomList');
-//handle chat room chat message the server
 
 var ChatRoomList = React.createClass({
   getInitialState: function() {
@@ -53,9 +52,15 @@ var ChatRoomList = React.createClass({
     };
   },
   handleClick: function ( room_id ) {
-    console.log('------');
-    console.log(room_id);
     window.currentRoomID = room_id;
+    // window.chatRoomMessage.state.chatMessageList
+    // debugger;
+    if(window.chatRoomMessage != undefined){
+      delete window.chatRoomMessage;
+      // window.chatRoomMessage.setState({
+      //   chatMessageList:[]
+      // });
+    }
     ReactDOM.render(
       <ChatMessage />,
       document.getElementById('chatRoomContents')
@@ -81,10 +86,11 @@ var ChatRoomList = React.createClass({
 });
 var ChatMessage = React.createClass({
   getInitialState: function () {
+    console.log('init');
     return {
       chatMessageList:[
         {
-          message:'Hello everyone!',
+          content:'Hello everyone!',
           uname:'server',
           uid:0,
           room_id:window.currentRoomID
@@ -93,6 +99,7 @@ var ChatMessage = React.createClass({
     };
   },
   componentDidMount: function () {
+    //handle chat room chat message the server
     var chatMessageSocket = new WebSocket('ws://192.168.2.137:9502/chatMessage');
     console.log('-----');
     // loaded...
@@ -102,16 +109,17 @@ var ChatMessage = React.createClass({
         // var content = {
         //   content:''
         // };
-        console.log(window.currentRoomID);
-        console.log('------');
-        var sendMessage = {
-          uid:userId,
-          uname:userName,
-          message:'ok',
-          room_id:window.currentRoomID
-        };
-        sendMessage = JSON.stringify(sendMessage);
-        chatMessageSocket.send(sendMessage);
+      console.log(window.currentRoomID);
+      console.log('------');
+      var sendMessage = {
+        uid:userId,
+        uname:userName,
+        content:'ok',
+        room_id:window.currentRoomID,
+        action:'open'
+      };
+      sendMessage = JSON.stringify(sendMessage);
+      chatMessageSocket.send(sendMessage);
     };
 
     // 监听消息
@@ -120,9 +128,10 @@ var ChatMessage = React.createClass({
 
         var content = $.parseJSON(event.data);
         console.log(content);
-        window.chatRoomMessage.state.chatMessageList.push(content);
-        window.chatRoomMessage.setState({
-          chatMessageList: window.chatRoomMessage.state.chatMessageList
+        // window.chatRoomMessage.state.chatMessageList = [];
+        this.state.chatMessageList.push(content);
+        this.setState({
+          chatMessageList: this.state.chatMessageList
         });
     };
 
@@ -142,11 +151,19 @@ var ChatMessage = React.createClass({
     return (
         <div>
         {
-          window.chatRoomMessage.state.chatMessageList.map(function( value , key ){
-             return <div className="float-left">
-                <span data-id={value.uid}>{value.uname}:</span>
-                {value.message}
-              </div>
+          this.state.chatMessageList.map(function( value , key ){
+             if(value.uid == userId){
+               return <p className="text-right">
+                  {value.content}
+                  <span data-id={value.uid}>:{value.uname}</span>
+                </p>
+             }else{
+               return <p className="text-left">
+                  <span data-id={value.uid}>{value.uname}:</span>
+                  {value.content}
+                </p>
+             }
+
           })
         }
         </div>

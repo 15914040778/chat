@@ -134,10 +134,10 @@ class Rooms extends Controller
       if(empty($room_id)){
         return [];
       }
-      $userMember = DB::table('room_users')
+      $userMembers = DB::table('room_users')
                     ->where('room_id' , $room_id)
                     ->pluck('user_id');
-      return $userMember;
+      return $userMembers;
     }
 
 }

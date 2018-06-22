@@ -17,7 +17,9 @@
     .clear{
       clear:both;
     }
-
+    #chatRoomContents > div > p{
+      width:100%;
+    }
     </style>
   </head>
   <body>
@@ -73,7 +75,7 @@
         </div>
         <div class="bd-example-container-body userMessages" id='chatRoomContents'>
           <!-- Chat contens -->
-          
+
           <!-- end Chat contens -->
         </div>
       </div>
