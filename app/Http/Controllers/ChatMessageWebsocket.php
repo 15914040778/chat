@@ -52,13 +52,10 @@ class ChatMessageWebsocket extends Controller
       });
       $this->server->on('close', function ($ser, $fd) {
           $Rooms = Rooms::connect();
-          echo $fd;
           //get all fd relation room id the data
           $allFdRoomData = $this->getRedisData('fd_room');
-          print_r($allFdRoomData);
           //get all fd relation user the data
           $allFdUserData = $this->getRedisData('fd_user');
-          print_r($allFdUserData);
           if(!empty($allUserRoom[$fd]) && !empty($allFdUserData[$fd])){
             //update user designated room the message read time
             $Rooms->updateReadTime($allFdUserData[$fd] , $allFdRoomData[$fd]);
@@ -148,6 +145,16 @@ class ChatMessageWebsocket extends Controller
       return false;
     }
     $redis = RedisObject::connect();
+    //When user switch chat room window
+    //Current time as a in current user and prior chat room the new read message the time 
+    if($key == 'fd_room' && $redis->hexists($key , $field)){
+      $allFdUserData = $this->getRedisData( 'fd_user' );
+      $Rooms = Rooms::connect();
+      if(!empty($allFdUserData[$field])){
+        //update user designated room the message read time
+        $Rooms->updateReadTime($allFdUserData[$field] , $value);
+      }
+    }
     $recordResult = $redis->hset($key , $field , $value);
     return $recordResult;
   }
