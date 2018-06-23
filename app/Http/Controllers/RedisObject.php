@@ -15,7 +15,7 @@ class RedisObject extends Controller
   /**
    * 获取redis连接的唯一出口
    */
-  static public function getRedisConn(){
+  static public function connect(){
       if(!self::$redisInstance instanceof self){
           self::$redisInstance = new self;
       }

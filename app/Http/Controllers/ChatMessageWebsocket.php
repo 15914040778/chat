@@ -8,11 +8,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Rooms;
 use App\Http\Controllers\Chats;
-
+use App\Http\Controllers\RedisObject;
 class ChatMessageWebsocket extends Controller
 {
   public $server;
-  public $users = array();
   public $i = 0;
   public function __construct() {
       $this->server = new \swoole_websocket_server("0.0.0.0/chatMessage", 9502);
@@ -22,45 +21,48 @@ class ChatMessageWebsocket extends Controller
 
       });
       $this->server->on('message', function (\swoole_websocket_server $server, $frame) {
-          $message = json_decode($frame->data);
-          //Record user "fd" the data
-          $this->recordUserFdData($message->uid , $frame->fd);
+        $message = json_decode($frame->data);
+        $Rooms = Rooms::connect();
+        //Get room user member
+
+        $roomUserMember = $Rooms->getRoomUserMember($message->room_id);
+
+        switch ($message->action) {
+          case 'open':
+            //Record user and fd the relation(User ID is key)
+            $this->insertRedisData( 'user_fd' , $message->uid , $frame->fd );
+            //Record fd and Room ID the relation
+            $this->insertRedisData( 'fd_room' , $frame->fd , $message->room_id );
+            //Record fd and user the relation(User ID is key)
+            $this->insertRedisData( 'fd_user', $frame->fd, $message->uid);
+            //Load history recoed
+            $this->loadHistoryRecoed($message->uid , $message->room_id);
+            break;
+          case 'send':
+            $this->sendMessage($message , $roomUserMember);
+            break;
+          default:
+            // code...
+            break;
+        }
 
 
 
-          $Rooms = Rooms::connect();
-          //Room user member
-          $roomUserMember = $Rooms->getRoomUserMember($message->room_id);
 
-          //Load history recoed
-          if($this->i == 0){
-            $Chats = Chats::connect();
-            $chatRecord = $Chats->getChatRecord($message->room_id);
-            foreach( $chatRecord as $key=>$value ){
-              $historyMessage = json_encode($value);
-              // if(!empty($this->users[$value->uid])){
-              //   $this->server->push($this->users[$value->uid], $historyMessage);
-              // }
-              foreach( $roomUserMember as $memberKey => $memberValue ){
-                if(!empty($this->users[$memberValue])){
-                  $this->server->push($this->users[$memberValue], $historyMessage);
-                }
-
-              }
-            }
-          }
-
-
-          //Push message to a designated user
-          foreach ($roomUserMember as $key=>$value) {
-              // $this->server->push($fd , json_encode($roomUserMember));
-              if(!empty($this->users[$value])){
-                $this->server->push($this->users[$value], $frame->data);
-              }
-          }
-          $this->i++;
       });
       $this->server->on('close', function ($ser, $fd) {
+          $Rooms = Rooms::connect();
+          echo $fd;
+          //get all fd relation room id the data
+          $allFdRoomData = $this->getRedisData('fd_room');
+          print_r($allFdRoomData);
+          //get all fd relation user the data
+          $allFdUserData = $this->getRedisData('fd_user');
+          print_r($allFdUserData);
+          if(!empty($allUserRoom[$fd]) && !empty($allFdUserData[$fd])){
+            //update user designated room the message read time
+            $Rooms->updateReadTime($allFdUserData[$fd] , $allFdRoomData[$fd]);
+          }
           echo "client {$fd} closed\n";
       });
       $this->server->on('request', function ($request, $response) {
@@ -73,48 +75,94 @@ class ChatMessageWebsocket extends Controller
       $this->server->start();
   }
   /**
-   * Record designated user the fd data
+   * Load history recoed
    * @version 1.0
-   * @var int $userID User ID
-   * @var int $fd     User designated the fd
-   * @return array    Data after recorded
+   * @var array $uid          User ID
+   * @var int   $room_id      Room ID
+   * @return bool
    */
-  public function recordUserFdData( $userID , $fd ){
-    if(empty($userID) || empty($fd)){
+  public function loadHistoryRecoed( $uid , $room_id ){
+    if(empty($room_id)){
       return false;
     }
-    $this->users[$userID] = $fd;
-    return $this->users;
+
+    //Load history recoed
+    if($this->i == 0){
+      $users = $this->getRedisData( 'user_fd' );
+      $Chats = Chats::connect();
+      $chatRecord = $Chats->getChatRecord($room_id);
+      foreach( $chatRecord as $key=>$value ){
+        $historyMessage = json_encode($value);
+
+        if(!empty($users[$uid])){
+
+          $this->server->push($users[$uid], $historyMessage);
+
+        }
+
+      }
+    }
+    $this->i++;
+  }
+  /**
+   * Send message
+   * @version 1.0
+   * @var object $sendMessageContent Send Message Content
+   * @var mixed  $roomUserMember     Room user member
+   * @return bool
+   */
+  public function sendMessage( $sendMessageContent , $roomUserMember ){
+    $Chats = Chats::connect();
+    $users = $this->getRedisData( 'user_fd' );
+    //Send message content insert to MySql database
+    $Chats->insert($sendMessageContent);
+    //Push message to a designated user
+    foreach ($roomUserMember as $key=>$value) {
+      // $this->server->push($fd , json_encode($roomUserMember));
+      if(!empty($users[$value])){
+        $this->server->push($users[$value], json_encode($sendMessageContent));
+      }
+    }
+  }
+  /**
+   * Get store in Redis the data
+   * @version 1.0
+   * @var string $key hash key
+   * @return array
+   */
+  public function getRedisData( $key ){
+    $redis = redisObject::connect();
+    $UsersFdData = $redis->hgetall($key);
+    return $UsersFdData;
+  }
+  /**
+   * Insert data to redis
+   * @version 1.0
+   * @var string $key     Redis hash key
+   * @var int    $field   Redis hash field
+   * @var int    $value   Redis hash value
+   * @return bool
+   */
+  public function insertRedisData( $key , $field , $value ){
+    if(empty($key) || empty($field) || empty($value)){
+      return false;
+    }
+    $redis = RedisObject::connect();
+    $recordResult = $redis->hset($key , $field , $value);
+    return $recordResult;
   }
   /**
    * Delete desiganted user the fd data
    * @version 1.0
    * @var int $userID User ID
-   * @return array data After deleting
+   * @return bool
    */
   public function deleteUserFdData( $userID ){
     if(empty($userID)){
       return false;
     }
-    unset($this->users[$userID]);
-    return $this->users;
-  }
-  /**
-   * Push room list data to Client
-   * @var int $userID  User ID
-   * @var mixed $roomList Room list data
-   * @version 1.0
-   * @return null
-   */
-  public function pushDataToClient(){
-    $Rooms = Rooms::connect();
-    $RoomListData = $Rooms->getAllRoomData();
-    foreach( $RoomListData as $key=>$value ){
-      if(!empty($this->users[$value->user_id])){
-        $userUnreadMessage = $Rooms->getUnreadMessageNumber($value->user_id , $value->room_id);
-        $value->userUnreadMessage = $userUnreadMessage;
-        $this->server->push($this->users[$value->user_id] , json_encode($value));
-      }
-    }
+    $redis = RedisObject::connect();
+    $deleteResult = $redis->hdel('members' , $userID);
+    return $deleteResult;
   }
 }

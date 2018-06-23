@@ -31,7 +31,7 @@ class Login extends JsonResource
             //Set login token
             setcookie('login_token' , $token , $current_time + 3600 * 24 , '/');
             //将current_time存入Redis中(用于验证是否登陆)
-            $Redis = RedisObject::getRedisConn();
+            $Redis = RedisObject::connect();
             $Redis->setex($user_info->name.'login_time' , 3600 * 24 , $current_time);
             //将用户信息存到Session中(用于验证是否登陆)
             $_SESSION['login_user_info'] = $user_info;

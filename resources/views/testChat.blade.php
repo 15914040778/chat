@@ -9,10 +9,13 @@
     .roomList{
       width: 30%;
       float: left;
+      min-height: 1000px;
+      border-right: 1px #e0e0e0 solid;
     }
     .userMessages{
       width: 70%;
       float: left;
+      min-height: 10px;
     }
     .clear{
       clear:both;
@@ -21,6 +24,12 @@
       width:100%;
     }
     </style>
+    <!-- ueditor -->
+    <!-- 配置文件 -->
+    <script type="text/javascript" src="ueditor/ueditor.config.js"></script>
+    <!-- 编辑器源码文件 -->
+    <script type="text/javascript" src="ueditor/ueditor.all.js"></script>
+    <!-- end ueditor -->
   </head>
   <body>
 
@@ -67,16 +76,23 @@
           <!-- end header -->
         </div>
         <div class="bd-example-container-sidebar">
-          <div class="bd-example" id='roomList'>
+          <div class="bd-example roomList" id='roomList'>
             <!-- Room list -->
 
             <!-- end Room list -->
           </div>
         </div>
-        <div class="bd-example-container-body userMessages" id='chatRoomContents'>
+        <div class="bd-example-container-body userMessages">
+          <div id='chatRoomContents'>
           <!-- Chat contens -->
 
           <!-- end Chat contens -->
+          </div>
+          <div id='loadUeditor'>
+            <!-- 加载编辑器的容器 -->
+
+            <!-- 实例化编辑器 -->
+          </div>
         </div>
       </div>
     </div>

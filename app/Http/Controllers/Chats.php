@@ -39,5 +39,25 @@ class Chats extends Controller
                   ->get();
     return $chatRecord;
   }
+  /**
+   * Send message content insert to MySql database
+   * @version 1.0
+   * @var object $sendMessageContent Send message content
+   * @return bool|int
+   */
+  public function insert( $sendMessageContent ){
+    if(empty($sendMessageContent) || empty($sendMessageContent->uid) || empty($sendMessageContent->room_id) || empty($sendMessageContent->content)){
+      return false;
+    }
+    $currentTime = date('Y-m-d H:i:s');
+    $insertResult = DB::table('chats')
+                    ->insert([
+                      'user_id'   => $sendMessageContent->uid,
+                      'room_id'   => $sendMessageContent->room_id,
+                      'content'   => $sendMessageContent->content,
+                      'send_time' => $currentTime
+                    ]);
+    return $insertResult;
+  }
 
 }

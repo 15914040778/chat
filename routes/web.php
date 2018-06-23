@@ -86,9 +86,11 @@ Route::get('chat' , function (){
 
 
 Route::get('test' , function () {
-  $Rooms = Rooms::connect();
-  $allRoomsData = $Rooms->getRoomUserMember(1);
-  print_r($allRoomsData);
+  // $Rooms = Rooms::connect();
+  // $allRoomsData = $Rooms->getRoomUserMember(1);
+  // print_r($allRoomsData);
+  // echo date('Y-m-d H:i:s');
+
   // print_r($allRoomsData[0]->user_id);
 });
 

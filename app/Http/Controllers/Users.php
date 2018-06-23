@@ -103,7 +103,7 @@ class Users extends Controller
     {
       session_start();
       $Client = new Client();
-      $Redis = RedisObject::getRedisConn();
+      $Redis = RedisObject::connect();
       //get Client ip
       $Client_ip = $Client->ip();
       //Get the user info that is stored stay session
@@ -125,5 +125,5 @@ class Users extends Controller
       }
 
     }
-    
+
 }

@@ -21,21 +21,25 @@ class RoomListServerWebsocket extends Controller
         });
 
         $this->server->on('message', function (\swoole_websocket_server $server, $frame) {
-
+            $Rooms = Rooms::connect();
             $message = json_decode($frame->data);
             switch ($message->action) {
               case 'open':
                 //recoed User 'fd' Data
                 $this->recordUserFdData($message->uid , $frame->fd);
                 break;
+              case 'updateReadTime':
+                //Update user read chat room message time
+                $Rooms->updateReadTime($message->uid , $message->room_id);
+                break;
               // case ''
               default:
-                // code...
+
                 break;
             }
-
-            //push room list data to Client
+            //return current room the state
             $this->pushDataToClient();
+
         });
 
 

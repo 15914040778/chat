@@ -1,41 +1,29 @@
 var roomListSocket = new WebSocket('ws://192.168.2.137:9501/roomList');
-
+// Char Room List
 var ChatRoomList = React.createClass({
   getInitialState: function() {
     return {
-      roomList:[
-        {
-          name:'test',
-          description:'.....',
-          id:9501,
-          userUnreadMessage:0
-        },
-      ]
+      roomList:[]
     };
   },
   componentDidMount: function () {
     // loaded...
     roomListSocket.onopen = function(evt) {
-        // 发送一个初始化消息
-        // var content = {
-        //   content:''
-        // };
         var sendMessage = {
           'action':'open',
           'uid':userId,
           'uname':userName,
-          'content':'ok'
+          'content':'ok',
+          'room_id':0
         };
+        // console.log(sendMessage);
         sendMessage = JSON.stringify(sendMessage);
         roomListSocket.send(sendMessage);
     };
 
     // 监听消息
     roomListSocket.onmessage = function(event) {
-        console.log('Client received a message', event);
-
         var content = $.parseJSON(event.data);
-        console.log(content);
         window.roomList.state.roomList.push(content);
         window.roomList.setState({
           roomList: window.roomList.state.roomList
@@ -53,29 +41,53 @@ var ChatRoomList = React.createClass({
   },
   handleClick: function ( room_id ) {
     window.currentRoomID = room_id;
-    // window.chatRoomMessage.state.chatMessageList
-    // debugger;
+    console.log(window.currentRoomID , '- -!!');
     if(window.chatRoomMessage != undefined){
-      delete window.chatRoomMessage;
-      // window.chatRoomMessage.setState({
-      //   chatMessageList:[]
-      // });
+      ReactDOM.unmountComponentAtNode(document.getElementById('chatRoomContents'));
+    }
+    if(window.editor != undefined){
+      //remover editor example
+      UE.getEditor('container').destroy();
+      $('#container').remove();
+      //remove react example
+      ReactDOM.unmountComponentAtNode(document.getElementById('loadUeditor'));
     }
     ReactDOM.render(
       <ChatMessage />,
       document.getElementById('chatRoomContents')
     );
+    ReactDOM.render(
+      <Editor />,
+      document.getElementById('loadUeditor')
+    );
+    //update current chat room the read time
+    window.roomList.setState({
+      roomList: []
+    });
+    var sendMessage = {
+      'action':'updateReadTime',
+      'uid':userId,
+      'uname':userName,
+      'content':'ok',
+      'room_id':window.currentRoomID
+    };
+    sendMessage = JSON.stringify(sendMessage);
+    roomListSocket.send(sendMessage);
   },
   render: function () {
     window.roomList = this;
     return (
-      <ul className="list-group roomList">
+      <ul className="list-group">
         {
-          window.roomList.state.roomList.map(function( value , obj ){
+          window.roomList.state.roomList.map(function( value , key ){
             return (
-              <li className="list-group-item d-flex justify-content-between align-items-center" onClick={window.roomList.handleClick.bind(window.roomList , value.id)}>
+              <li className="list-group-item d-flex justify-content-between align-items-center" onClick={window.roomList.handleClick.bind(window.roomList , value.room_id)}>
                 {value.name}
-                <span className="badge badge-primary badge-pill">{value.userUnreadMessage}</span>
+                {
+                  value.userUnreadMessage != 0 ?
+                      <span className="badge badge-primary badge-pill">{value.userUnreadMessage}</span>
+                  : ''
+                }
               </li>
             );
           })
@@ -84,6 +96,8 @@ var ChatRoomList = React.createClass({
     );
   }
 });
+
+//Chat Message
 var ChatMessage = React.createClass({
   getInitialState: function () {
     console.log('init');
@@ -100,17 +114,11 @@ var ChatMessage = React.createClass({
   },
   componentDidMount: function () {
     //handle chat room chat message the server
-    var chatMessageSocket = new WebSocket('ws://192.168.2.137:9502/chatMessage');
-    console.log('-----');
+    window.chatMessageSocket = new WebSocket('ws://192.168.2.137:9502/chatMessage');
+    // console.log('-----');
     // loaded...
-    chatMessageSocket.onopen = function(evt) {
-      console.log('Client received a message', event);
-        // 发送一个初始化消息
-        // var content = {
-        //   content:''
-        // };
-      console.log(window.currentRoomID);
-      console.log('------');
+    window.chatMessageSocket.onopen = function(evt) {
+      console.log(evt);
       var sendMessage = {
         uid:userId,
         uname:userName,
@@ -118,40 +126,39 @@ var ChatMessage = React.createClass({
         room_id:window.currentRoomID,
         action:'open'
       };
+      console.log(sendMessage , '_!!_');
       sendMessage = JSON.stringify(sendMessage);
-      chatMessageSocket.send(sendMessage);
+      window.chatMessageSocket.send(sendMessage);
     };
 
     // 监听消息
-    chatMessageSocket.onmessage = function(event) {
+    window.chatMessageSocket.onmessage = function(event) {
         console.log('Client received a message', event);
 
         var content = $.parseJSON(event.data);
-        console.log(content);
         // window.chatRoomMessage.state.chatMessageList = [];
-        this.state.chatMessageList.push(content);
-        this.setState({
-          chatMessageList: this.state.chatMessageList
+        window.chatRoomMessage.state.chatMessageList.push(content);
+        window.chatRoomMessage.setState({
+          chatMessageList: window.chatRoomMessage.state.chatMessageList
         });
+        console.log(window.chatRoomMessage.state.chatMessageList , '-!-');
     };
 
     // 监听Socket的关闭
-    chatMessageSocket.onclose = function(event) {
+    window.chatMessageSocket.onclose = function(event) {
         console.log('Client notified socket has closed',event);
     };
 
-    chatMessageSocket.onerror = function(evt) {
+    window.chatMessageSocket.onerror = function(evt) {
         console.log('Client onerror',event);
     };
   },
   render: function () {
     window.chatRoomMessage = this;
-    console.log(window.chatRoomMessage.state.chatMessageList);
-    // console.log(window.chatRoomMessage.state.chatMessageList);
     return (
         <div>
         {
-          this.state.chatMessageList.map(function( value , key ){
+          window.chatRoomMessage.state.chatMessageList.map(function( value , key ){
              if(value.uid == userId){
                return <p className="text-right">
                   {value.content}
@@ -170,6 +177,51 @@ var ChatMessage = React.createClass({
     );
   }
 });
+
+//Editor
+var Editor = React.createClass({
+  getInitialState: function () {
+    return {
+
+    };
+  },
+  componentDidMount: function () {
+    // window.ue = null;
+    // window.ue.getEditor('container' , {
+    //   toolbars : []
+    // }).destroy();
+    console.log('~~~~~~~~');
+    window.ue = UE.getEditor('container');
+  },
+  handleClick: function () {
+    console.log('Send Successes');
+    var sendContent = window.ue.getContent();
+    var sendMessage = {
+      action:'send',
+      uname:userName,
+      uid:userId,
+      content:sendContent,
+      room_id:window.currentRoomID
+    };
+    sendMessage = JSON.stringify(sendMessage);
+    window.chatMessageSocket.send(sendMessage);
+    window.ue.setContent('');
+  },
+  render: function () {
+    window.editor = this;
+    return <div>
+            <script id="container" name="content" type="text/plain">
+                这里写你的初始化内容
+            </script>
+            <button type="button" className="btn btn-primary btn-lg btn-block" onClick={window.editor.handleClick}>Send Message</button>
+          </div>;
+  }
+});
+
+/*
+
+ */
+
 ReactDOM.render(
   <ChatRoomList />,
   document.getElementById('roomList')
