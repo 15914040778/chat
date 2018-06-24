@@ -32,6 +32,9 @@ class RoomListServerWebsocket extends Controller
                 //Update user read chat room message time
                 $Rooms->updateReadTime($message->uid , $message->room_id);
                 break;
+              case 'updateState':
+                
+                break;
               // case ''
               default:
 

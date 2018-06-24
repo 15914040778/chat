@@ -26,21 +26,24 @@ class ChatMessageWebsocket extends Controller
         //Get room user member
 
         $roomUserMember = $Rooms->getRoomUserMember($message->room_id);
+        //Record user and fd the relation(User ID is key)
+        $this->insertRedisData( 'user_fd' , $message->uid , $frame->fd );
+        //Record fd and Room ID the relation
+        $this->insertRedisData( 'fd_room' , $frame->fd , $message->room_id );
+        //Record fd and user the relation(User ID is key)
+        $this->insertRedisData( 'fd_user', $frame->fd, $message->uid);
 
         switch ($message->action) {
           case 'open':
-            //Record user and fd the relation(User ID is key)
-            $this->insertRedisData( 'user_fd' , $message->uid , $frame->fd );
-            //Record fd and Room ID the relation
-            $this->insertRedisData( 'fd_room' , $frame->fd , $message->room_id );
-            //Record fd and user the relation(User ID is key)
-            $this->insertRedisData( 'fd_user', $frame->fd, $message->uid);
+
             //Load history recoed
             $this->loadHistoryRecoed($message->uid , $message->room_id);
             break;
           case 'send':
+            //push message to current room the all user member
             $this->sendMessage($message , $roomUserMember);
             break;
+          
           default:
             // code...
             break;
@@ -57,8 +60,12 @@ class ChatMessageWebsocket extends Controller
           //get all fd relation user the data
           $allFdUserData = $this->getRedisData('fd_user');
           if(!empty($allUserRoom[$fd]) && !empty($allFdUserData[$fd])){
-            //update user designated room the message read time
+            //Update user designated room the message read time
             $Rooms->updateReadTime($allFdUserData[$fd] , $allFdRoomData[$fd]);
+
+            //Delete current user the relevant info
+            //...
+
           }
           echo "client {$fd} closed\n";
       });
@@ -146,11 +153,11 @@ class ChatMessageWebsocket extends Controller
     }
     $redis = RedisObject::connect();
     //When user switch chat room window
-    //Current time as a in current user and prior chat room the new read message the time 
+    //Current time as a in current user and prior chat room the new read message the time
     if($key == 'fd_room' && $redis->hexists($key , $field)){
       $allFdUserData = $this->getRedisData( 'fd_user' );
-      $Rooms = Rooms::connect();
       if(!empty($allFdUserData[$field])){
+        $Rooms = Rooms::connect();
         //update user designated room the message read time
         $Rooms->updateReadTime($allFdUserData[$field] , $value);
       }
