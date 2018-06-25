@@ -270,22 +270,101 @@ posix_kill($pid, SIGUSR1);
 Route::get('testLibevent' , function(){
   // $content = file_get_contents('http://www.taobao.com');
   // file_put_contents('1.html' , $content);
+  // exit;
+  // function signal_handler( $signo ){
+  //   switch ($signo) {
+  //     case '':
+  //       // code...
+  //       break;
+  //
+  //     default:
+  //       // code...
+  //       break;
+  //   }
+  // }
+  //
+  //
+  // declare(ticks=1);
+  //
+  // pcntl_signal(SIGINT, "signal_handler");
+
+  // sleep(30);
+  //
+  /*
+  // for($i = 0; $i < 100; $i++){
+    // $pid = pcntl_fork();
+    //find process
+    // if($pid == 0){
+      // $content = file_get_contents('1.html');
+      // file_put_contents($i.'.html' , $content);
+      // exit;
+    // main process
+    // }else{
+    //   $pidArr[] = $pid;
+    //   echo "OK \n";
+    // }
+  // }
+  // while(count($pidArr) > 0){
+  //   $currentId = pcntl_waitpid(-1, $status, WNOHANG);
+  //   foreach($pidArr as $key=>$pid){
+  //     if($currentId == $pid){
+  //       unset($pidArr[$key]);
+  //     }
+  //   }
+  // }
+  */
+
+  function sighandler($signo) {
+    //$signo is signal code
+    switch ($signo) {
+      case 'SIGUSR1':
+        //r
+        $state = pcntl_waitpid(-1, $status, WNOHANG);
+        echo $state , time() , '<br/>';
+        break;
+
+      default:
+        // code...
+        break;
+    }
+
+  }
+
+  declare(ticks=1);
+
+  pcntl_signal(SIGUSR1, "sighandler");
+
   for($i = 0; $i < 100; $i++){
     $pid = pcntl_fork();
+    //error
+    if($pid == -1){
+      echo 'pcntl fork error';
     //find process
-    if($pid == 0){
-      $content = file_get_contents('1.html');
+    }elseif($pid == 0){
+      sleep(5);
+      $content = date('Y-m-d H:i:s');
+      $content = microtime();
+      // $content = file_get_contents('1.html');
       file_put_contents($i.'.html' , $content);
-    // main process
+      exit;
+    //main process
     }else{
-      pcntl_wait($status, WUNTRACED);
-      if(pcntl_wifexited($status)){
-        echo 'Normal end';
-      }else{
-        echo 'Not normal';
-      }
-      echo "OK \n";
+      echo date('Y-m-d H:i:s');
+      posix_kill(posix_getpid(), SIGUSR1);
     }
   }
+
+  // for($i = 0; $i < 100; $i++){
+  //   $content = file_get_contents('1.html');
+  //   file_put_contents($i.'.html' , $content);
+  // }
+
+
+
+
+
+
+
+
 
 });
